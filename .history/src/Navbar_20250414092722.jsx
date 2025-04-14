@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AppBar,
@@ -17,28 +18,34 @@ import {
   Popover,
   Divider,
   ListItemButton,
+  Menu,
+  MenuItem,
+  Tooltip
 } from '@mui/material'
-import { useAuth } from './context/AuthContext'
-import { useState } from 'react'
 import {
   Home,
   People,
   Logout,
-  Menu,
+  Menu as MenuIcon,
   Notifications,
   MarkEmailRead,
   Delete,
   HelpOutline,
   Info,
+  Visibility
 } from '@mui/icons-material'
+import { useAuth } from './context/AuthContext'
+import { useTheme } from '@mui/material/styles'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
+  const theme = useTheme()
   const isMobile = useMediaQuery('(max-width:768px)')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null)
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null)
 
-  // Beispielbenachrichtigungen - diese sollten aus deinem Backend kommen
+  // Example notifications - these should come from your backend
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -97,6 +104,14 @@ const Navbar = () => {
   ).length
   const notificationOpen = Boolean(notificationAnchorEl)
 
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchor(event.currentTarget)
+  }
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null)
+  }
+
   const navLinks = [
     { text: 'Home', path: '/', icon: <Home /> },
     {
@@ -152,7 +167,7 @@ const Navbar = () => {
       />
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        {/* Mitteilungscenter */}
+        {/* Notification center */}
         <IconButton
           color="inherit"
           onClick={handleNotificationOpen}
@@ -170,18 +185,55 @@ const Navbar = () => {
           </Badge>
         </IconButton>
 
-        <Avatar
-          sx={{
-            bgcolor: 'white',
-            color: 'primary.main',
-            fontWeight: 'bold',
-            width: 36,
-            height: 36,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        <Tooltip title="Benutzerprofil">
+          <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
+            <Avatar
+              sx={{
+                bgcolor: 'white',
+                color: 'primary.main',
+                fontWeight: 'bold',
+                width: 36,
+                height: 36,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                }
+              }}
+            >
+              {getInitials()}
+            </Avatar>
+          </IconButton>
+        </Tooltip>
+
+        <Menu
+          anchorEl={userMenuAnchor}
+          open={Boolean(userMenuAnchor)}
+          onClose={handleUserMenuClose}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              borderRadius: 2,
+              minWidth: 180,
+              overflow: 'visible',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            }
           }}
         >
-          {getInitials()}
-        </Avatar>
+          <MenuItem onClick={handleUserMenuClose}>
+            <ListItemIcon><People fontSize="small" /></ListItemIcon>
+            <ListItemText>Mein Profil</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={handleUserMenuClose}>
+            <ListItemIcon><HelpOutline fontSize="small" /></ListItemIcon>
+            <ListItemText>Einstellungen</ListItemText>
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={logout}>
+            <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+            <ListItemText>Abmelden</ListItemText>
+          </MenuItem>
+        </Menu>
 
         <Button
           color="error"
@@ -218,7 +270,7 @@ const Navbar = () => {
           '&:hover': { transform: 'scale(1.05)' },
         }}
       >
-        <Menu />
+        <MenuIcon />
       </IconButton>
 
       <IconButton

@@ -1,6 +1,8 @@
-import { Box, Typography, Button, Container, useTheme } from '@mui/material'
+import React from 'react'
+import { Box, Typography, Button, Container } from '@mui/material'
 import { Link } from 'react-router-dom'
 import Navbar from './Navbar'
+import { useTheme } from '@mui/material/styles'
 
 const HomePage = () => {
   const theme = useTheme()

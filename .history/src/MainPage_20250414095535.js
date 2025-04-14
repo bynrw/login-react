@@ -64,7 +64,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import Divider from '@mui/material/Divider'
 import Alert from '@mui/material/Alert'
 
-import { useAuth } from './AuthContext'
+import { useAuth } from './context/AuthContext'
 
 const organisationsDaten = {
   'Kreisfreie Stadt': {

@@ -1,0 +1,404 @@
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Toolbar,
+  Typography,
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Grid,
+  Paper,
+  Alert,
+  Slide,
+  Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import EmailIcon from '@mui/icons-material/Email'
+import DateRangeIcon from '@mui/icons-material/DateRange'
+import ExitToAppIcon from '@mui/icons-material/ExitToApp'
+import EditIcon from '@mui/icons-material/Edit'
+import LockResetIcon from '@mui/icons-material/LockReset'
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
+import { styled, keyframes } from '@mui/system'
+
+// ANIMATIONS-DEFINITIONEN
+const shimmer = keyframes`
+  0% { background-position: -468px 0 }
+  100% { background-position: 468px 0 }
+`
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`
+
+// GESTYLTE KOMPONENTEN
+// Hintergrund mit Farbverlauf und Punktmuster
+const GradientBackground = styled('div')({
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  background: 'linear-gradient(120deg, #0a1128 0%, #1a2c56 50%, #304b89 100%)',
+  zIndex: -1,
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '200%',
+    height: '200%',
+    top: -100,
+    left: -100,
+    background:
+      'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+    backgroundSize: '30px 30px',
+  },
+})
+
+// Karte mit Glasmorphismus-Effekt
+const GlassmorphicCard = styled(Box)(({ theme }) => ({
+  width: '100%',
+  maxWidth: 1200,
+  background: 'rgba(255, 255, 255, 0.08)',
+  backdropFilter: 'blur(20px)',
+  borderRadius: '24px',
+  boxShadow: 'rgba(0, 0, 0, 0.3) 0px 20px 60px -10px',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  overflow: 'hidden',
+  position: 'relative',
+  animation: `${fadeIn} 0.6s ease-out`,
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    background:
+      'linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.15) 45%, rgba(255, 255, 255, 0.05) 50%, transparent 55%)',
+    transform: 'translateX(-100%)',
+    animation: `${shimmer} 10s infinite`,
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    borderRadius: '20px',
+    margin: theme.spacing(2),
+  },
+}))
+
+// Beispiel-Organisationsstruktur für die Auswahl
+const organisations = {
+  'Kreisfreie Stadt': {
+    Bonn: [
+      'Verwaltung Bonn',
+      'BF Bonn',
+      'FF Bonn',
+      'LTST Bonn',
+      'Krisenstab Bonn',
+    ],
+    Köln: ['Verwaltung Köln', 'BF Köln', 'FF Köln', 'LTST Köln'],
+    Düsseldorf: ['Verwaltung Düsseldorf', 'BF Düsseldorf', 'Stab Düsseldorf'],
+  },
+}
+
+/**
+ * Dashboard-Komponente - Hauptansicht nach erfolgreicher Anmeldung
+ * Zeigt Benutzerinformationen und ermöglicht die Auswahl einer Organisation
+ */
+const Dashboard = () => {
+  const { currentUser, logout, selectOrganization } = useAuth()
+  const navigate = useNavigate()
+  const [selectedCity, setSelectedCity] = useState('')
+  const [selectedOrg, setSelectedOrg] = useState('')
+
+  // Handler für die Änderung der ausgewählten Stadt
+  const handleCityChange = (event) => {
+    setSelectedCity(event.target.value)
+    setSelectedOrg('') // Zurücksetzen der Organisationsauswahl bei Stadtänderung
+  }
+
+  // Handler für die Änderung der ausgewählten Organisation
+  const handleOrgChange = async (event) => {
+    const org = event.target.value
+    setSelectedOrg(org)
+    try {
+      await selectOrganization(org)
+    } catch (error) {
+      console.error('Organisationsauswahl fehlgeschlagen:', error)
+    }
+  }
+
+  // Dummy-Funktionen für zukünftige Implementierungen
+  const handleProfileEdit = () => alert('Profilbearbeitung wird geöffnet...')
+  const handleChangePassword = () => alert('Passwortänderung wird geöffnet...')
+  const handleTwoFactor = () =>
+    alert('2-Faktor-Authentifizierung aktivieren...')
+    
+  // Abmeldefunktion und Navigation zur Login-Seite
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
+
+  // Optionen für die Auswahlfelder basierend auf der Organisationsstruktur
+  const cityOptions = Object.keys(organisations['Kreisfreie Stadt'])
+  const orgOptions = selectedCity
+    ? organisations['Kreisfreie Stadt'][selectedCity]
+    : []
+
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      {/* Hintergrund mit Farbverlauf */}
+      <GradientBackground />
+      
+      {/* Navigationsleiste am oberen Rand */}
+      <AppBar position="static" sx={{ background: 'rgba(0, 0, 0, 0.05)' }}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Benutzer-Dashboard
+          </Typography>
+          <Button
+            color="inherit"
+            onClick={handleLogout}
+            startIcon={<ExitToAppIcon />}
+            aria-label="Abmelden"
+          >
+            Abmelden
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        {/* Hauptkarte mit Glasmorphismus-Effekt */}
+        <GlassmorphicCard sx={{ p: { xs: 2, md: 4 } }}>
+          <Typography variant="h4" sx={{ color: 'white', mb: 3 }}>
+            Herzlich Willkommen, {currentUser?.username || 'Benutzer'}!
+          </Typography>
+
+          <Grid container spacing={3}>
+            {/* Benutzerprofilbereich mit Avatar */}
+            <Grid item xs={12} md={4}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  background: 'transparent',
+                }}
+              >
+                <Avatar
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    mb: 2,
+                    bgcolor: 'primary.main',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                  }}
+                >
+                  {currentUser?.username?.charAt(0).toUpperCase() || '?'}
+                </Avatar>
+                <Typography variant="h5" gutterBottom sx={{ color: 'white' }}>
+                  {currentUser?.username}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#e0e0e0' }}>
+                  {currentUser?.email}
+                </Typography>
+                <Tooltip title="Ihr Profil bearbeiten">
+                  <Button
+                    variant="outlined"
+                    sx={{ mt: 2, borderColor: 'white', color: 'white' }}
+                    startIcon={<EditIcon />}
+                    onClick={handleProfileEdit}
+                  >
+                    Profil bearbeiten
+                  </Button>
+                </Tooltip>
+              </Paper>
+            </Grid>
+
+            {/* Benutzerinformationsbereich */}
+            <Grid item xs={12} md={8}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  background: 'transparent',
+                  color: 'white',
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Ihre Informationen
+                </Typography>
+                <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.3)' }} />
+                <List>
+                  <ListItem>
+                    <ListItemIcon sx={{ color: 'white' }}>
+                      <AccountCircleIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Benutzername"
+                      secondary={currentUser?.username}
+                      secondaryTypographyProps={{ color: '#e0e0e0' }}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon sx={{ color: 'white' }}>
+                      <EmailIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="E-Mail"
+                      secondary={currentUser?.email}
+                      secondaryTypographyProps={{ color: '#e0e0e0' }}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemIcon sx={{ color: 'white' }}>
+                      <DateRangeIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Mitglied seit"
+                      secondary="01.01.2024"
+                      secondaryTypographyProps={{ color: '#e0e0e0' }}
+                    />
+                  </ListItem>
+                </List>
+              </Paper>
+            </Grid>
+
+            {/* Organisationsauswahlbereich */}
+            <Grid item xs={12}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                }}
+              >
+                <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>
+                  Organisationsauswahl
+                </Typography>
+                <Divider sx={{ mb: 3, borderColor: 'rgba(255,255,255,0.3)' }} />
+
+                <Grid container spacing={2}>
+                  {/* Auswahlfeld für die Stadt */}
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel sx={{ color: 'white' }}>Stadt</InputLabel>
+                      <Select
+                        value={selectedCity}
+                        onChange={handleCityChange}
+                        label="Stadt"
+                        sx={{
+                          color: 'white',
+                          '.MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.3)',
+                          },
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              bgcolor: '#0a1128',
+                              color: 'white',
+                            },
+                          },
+                        }}
+                      >
+                        {cityOptions.map((city) => (
+                          <MenuItem key={city} value={city}>
+                            {city}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* Auswahlfeld für die Organisation */}
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel sx={{ color: 'white' }}>
+                        Organisation
+                      </InputLabel>
+                      <Select
+                        value={selectedOrg}
+                        onChange={handleOrgChange}
+                        label="Organisation"
+                        disabled={!selectedCity}
+                        sx={{
+                          color: 'white',
+                          '.MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.3)',
+                          },
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              bgcolor: '#0a1128',
+                              color: 'white',
+                            },
+                          },
+                        }}
+                      >
+                        {orgOptions.map((org) => (
+                          <MenuItem key={org} value={org}>
+                            {org}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                {/* Bestätigungsmeldung nach Organisationsauswahl */}
+                {selectedOrg && (
+                  <Alert
+                    severity="success"
+                    sx={{
+                      mt: 2,
+                      bgcolor: 'rgba(46, 125, 50, 0.15)',
+                      color: '#a5d6a7',
+                    }}
+                  >
+                    Ausgewählte Organisation: {selectedOrg}
+                  </Alert>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* Hinweisleiste am unteren Rand */}
+          <Slide direction="up" in timeout={600}>
+            <Alert
+              severity="info"
+              sx={{
+                mt: 4,
+                borderRadius: '12px',
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                color: 'white',
+              }}
+            >
+              Wählen Sie Ihre Organisation aus der Liste oben aus
+            </Alert>
+          </Slide>
+        </GlassmorphicCard>
+      </Container>
+    </Box>
+  )
+}
+
+export default Dashboard
